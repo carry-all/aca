@@ -8,3 +8,4 @@ Timer for meetings
 * `R` - Reset and start again
 * `Space` - Start/pause
 * `↑` / `↓` - Adjust by 10 secs
+* `F` - Fullscreen
