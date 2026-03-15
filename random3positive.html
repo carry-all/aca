@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Позитивные утверждения ВДА</title>
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --primary-text: #2d3748;
+            --accent-color: #4a90e2;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+            color: var(--accent-color);
+            padding-bottom: 40px;
+        }
+
+        .week-info {
+            margin-bottom: 30px;
+            font-style: italic;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        #quote-display {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .quote-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border-left: 5px solid var(--accent-color);
+            transition: transform 0.2s ease;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .quote-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .quote-text {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="title">Позитивные утверждения ВДА</h1>
+
+        <div id="quote-display">
+            <!-- Quotes will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        const promises = [
+            "Я бессилен перед последствиями алкоголизма или семейной дисфункции",
+            "Я бессилен перед чертами выживания из Списка",
+            "Моя жизнь неуправляема, когда я фокусируюсь на других в большей степени, чем на себе",
+            "Я не был причиной алкоголизма или дисфункции своих родителей",
+            "Мои чувства и мысли не зависят от мыслей родителей и членов моей семьи",
+            "Я могу прекратить попытки исцелить или изменить родительскую семью через свои текущие взаимоотношения. Я могу перестать исправлять других людей",
+            "Я могу прекратить беспощадно осуждать себя",
+            "Я ценный, достойный человек",
+            "Я люблю своего Внутреннего Ребёнка ни за что, просто так",
+            "Я всеми силами буду защищать своего Внутреннего Ребёнка",
+            "Я найду время, чтобы выслушать своего Внутреннего Ребёнка и выполнить данные ему обещания",
+            "Я введу Внутреннего Ребёнка в свою жизнь через игру, творчество и духовность",
+            "Я уделю время тому, чтобы стать себе Любящим Родителем",
+            "Знать, кто я, – хорошо",
+            "Доверять себе – естественно",
+            "Называть себя взрослым ребёнком – нормально",
+            "Хотеть жить по-другому – нормально",
+            "Говорить «нет», не чувствуя себя виноватым, – можно",
+            "Не придираться к себе – можно",
+            "Плакать, когда смотришь фильм или слышишь песню, – можно",
+            "Даже если я только учусь понимать, что я чувствую, испытывать любые чувства – нормально",
+            "Не беспокоиться о других в своих мыслях – нормально",
+            "Испытывать гнев – естественно",
+            "Получать удовольствие и веселиться – естественно",
+            "Совершать ошибки и учиться – естественно",
+            "Не знать всего – нормально",
+            "Говорить «я не знаю» – нормально",
+            "Просить других научить меня тому, чего я не умею, – можно",
+            "Мечтать и надеяться – естественно",
+            "Думать не так, как принято в моей семье, – можно",
+            "Пробовать и говорить «мне нравится это» или «мне нравится то» – нормально",
+            "Отделяться с любовью – нормально",
+            "Искать свою собственную Высшую Силу – нормально",
+            "Относиться к себе с вниманием, любовью и заботой – можно",
+            "Говорить, что я люблю себя, – можно",
+            "Работать по программе ВДА – можно",
+            "У меня есть право получать психотерапевтическую помощь",
+            "У меня есть право и на мне лежит ответственность за то, чтобы бесплатно расспросить психотерапевта до того, как начать работу с ним. (Это можно сделать по телефону",
+            "У меня есть право и на мне лежит ответственность за то, чтобы найти психотерапевта, который с уважением будет относиться ко мне",
+            "У меня есть право и на мне лежит ответственность за то, чтобы найти психотерапевта, который осведомлён о программе ВДА и поддерживает моё выздоровление в ней",
+            "Я могу оплачивать услуги психотерапевта, который поможет мне расти эмоционально и духовно",
+            "У меня есть право и на мне лежит ответственность за то, чтобы прервать психотерапию, если я не двигаюсь к исцелению",
+            "Если в психотерапии я почувствую себя небезопасно, я не стану саботировать её или убегать, вместо этого я расскажу о своих чувствах психотерапевту и попытаюсь найти решение",
+            "Посещение собраний ВДА и работа со спонсором возвращают меня к ясности и здравомыслию",
+            "Я распознаю, как проявляются последствия зависимости и семейной дисфункции в моей сегодняшней жизни",
+            "Я прихожу к убеждению, что было безумием думать, будто причина зависимости или дисфункции родителей во мне. Я был ребёнком, они – родителями",
+            "Я не уникален",
+            "Я не одинок",
+            "Я готов рассмотреть возможность понемногу отпускать контроль в своей жизни",
+            "Я готов позвонить кому-нибудь, когда почувствую сильное желание проконтролировать мысли или действия другого человека",
+            "Я верю, что подлинный выбор не зависит от моих иллюзий о контроле и порядке, а исходит от Бога, как я Его понимаю",
+            "Я стремлюсь к подлинному выбору и умению различать суть вещей",
+            "Я передаю свою семью Богу, как я Его понимаю",
+            "Я препоручаю свою ненависть к себе",
+            "Обещания ВДА написаны для меня, они исполняются в моей жизни",
+            "Во мне раскрывается Истинная Личность",
+            "Я принимаю стыд и другие неприятные чувства, не пытаясь убежать или заглушить их нездоровым поведением",
+            "У меня есть достоинства, я нахожу и осознаю их",
+            "Бог, как я Его понимаю, слышит все мои молитвы",
+            "Я могу просить о помощи"
+        ];
+
+        // 1. Calculate the current Week Number since Epoch
+        // This ensures the value changes exactly once a week (Monday transition)
+        function getWeekIndex() {
+            const now = new Date();
+            const day = now.getDay(); // 0 (Sun) to 6 (Sat)
+            // Adjust so week starts on Monday (0) to Sunday (6)
+            const dayAdjusted = day === 0 ? 6 : day - 1;
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - dayAdjusted);
+            startOfWeek.setHours(0,0,0,0);
+
+            // Return number of weeks since Jan 1 1970
+            return Math.floor(startOfWeek.getTime() / (1000 * 60 * 60 * 24 * 7));
+        }
+
+        // 2. Simple Seeded Random Generator (Mulberry32)
+        function splitmix32(a) {
+            return function() {
+                a |= 0; a = a + 0x9e3779b9 | 0;
+                var t = a ^ a >>> 16; t = Math.imul(t, 0x21f0aaad);
+                t = t ^ t >>> 15; t = Math.imul(t, 0x735a2d97);
+                t = t ^ t >>> 15;
+                return (t >>> 0) / 4294967296;
+            }
+        }
+
+        function displayQuotes() {
+            const container = document.getElementById('quote-display');
+            const weekIndex = getWeekIndex();
+
+            // Logic for cycle:
+            // We show 3 quotes at once.
+            const quotesPerPage = 3;
+            const totalQuotes = promises.length;
+            const weeksPerCycle = Math.ceil(totalQuotes / quotesPerPage); // 60 / 3 = 20 weeks
+
+            const currentCycle = Math.floor(weekIndex / weeksPerCycle);
+            const weekInCycle = weekIndex % weeksPerCycle;
+
+            // Seed the randomizer with the CYCLE number.
+            // This means for 20 weeks, the "shuffled" order stays the same.
+            const rand = splitmix32(currentCycle);
+
+            const shuffled = [...promises];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(rand() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+
+            // Pick the 3 quotes for THIS week
+            const startIdx = weekInCycle * quotesPerPage;
+            const selected = shuffled.slice(startIdx, startIdx + quotesPerPage);
+
+            selected.forEach((text, index) => {
+                const card = document.createElement('div');
+                card.className = 'quote-card';
+                card.style.animationDelay = (index * 0.15) + 's';
+
+                const p = document.createElement('p');
+                p.className = 'quote-text';
+                p.textContent = text;
+
+                card.appendChild(p);
+                container.appendChild(card);
+            });
+        }
+
+        window.onload = displayQuotes;
+    </script>
+</body>
+</html>

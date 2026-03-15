@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Timer</title>
+    <style>
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #000000;
+            --accent-color: #0066cc;
+            --overtime-bg: #ff8080;
+            --overtime-text: #ffffff;
+            --history-text: #777;
+            --indicator-color: #2ecc71;
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            height: 100%; width: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            transition: background-color 0.3s ease;
+        }
+
+        body.overtime {
+            background-color: var(--overtime-bg);
+            color: var(--overtime-text);
+        }
+
+        /* Centering Logic */
+        #main-container {
+            position: relative;
+            height: 100vh;
+            width: 100vw;
+            justify-content: space-between;
+            align-items: center;
+            padding: 60px 0;
+            box-sizing: border-box;
+        }
+
+        /* Message Box */
+        #message-container {
+            position: absolute;
+            top: 25%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            text-align: center;
+            z-index: 10;
+        }
+
+        #message-display {
+            font-size: 2.8rem;
+            cursor: pointer;
+            font-weight: 300;
+        }
+
+        #message-input {
+            font-size: 2.8rem;
+            background: rgba(0,0,0,0.05);
+            border: 2px solid var(--accent-color);
+            color: inherit;
+            text-align: center;
+            display: none;
+            outline: none;
+            width: 80%;
+        }
+
+        /* Main Timer */
+        #timer-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            user-select: none;
+        }
+
+        #timer-digits {
+            font-size: 24vw;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+            line-height: 1;
+            position: relative;
+        }
+
+        /* Running Indicators */
+        .blink { animation: blinker 1s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.3; } }
+        .pulse { animation: pulse-glow 2s infinite; }
+        @keyframes pulse-glow { 0% { transform: scale(1); } 50% { transform: scale(1.01); } 100% { transform: scale(1); } }
+
+        #running-indicator {
+            position: absolute;
+            top: 10%; right: -40px;
+            width: 25px; height: 25px;
+            background-color: var(--indicator-color);
+            border-radius: 50%;
+            display: none;
+            box-shadow: 0 0 15px var(--indicator-color);
+        }
+        body.overtime #running-indicator { background-color: #fff; box-shadow: 0 0 15px #fff; }
+
+        /* Sidebar & History */
+        #sidebar {
+            position: absolute;
+            right: 30px;
+            top: 50px;
+            bottom: 50px;
+            width: 320px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* Pin to bottom */
+            text-align: right;
+            z-index: 20;
+        }
+
+        #history-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            color: var(--history-text);
+            font-size: 0.6rem;
+            overflow: hidden;
+        }
+
+        .history-item {
+            padding: 1px 30px 1px 10px; /* Space for bracket on right */
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+            cursor: pointer;
+            position: relative;
+        }
+        
+        /* Bracket Visuals */
+        .bracket::after {
+            content: '';
+            position: absolute;
+            right: 5px;
+            width: 8px;
+            border-right: 2px solid var(--accent-color);
+        }
+        body.overtime .bracket::after { border-color: #fff; }
+
+        .bracket-top::after {
+            top: 50%; height: 50%;
+            border-top: 2px solid var(--accent-color);
+        }
+        .bracket-mid::after {
+            top: 0; height: 100%;
+        }
+        .bracket-bot::after {
+            top: 0; height: 50%;
+            border-bottom: 2px solid var(--accent-color);
+        }
+        body.overtime .bracket-top::after, body.overtime .bracket-bot::after { border-color: #fff; }
+
+        .history-item:hover, #current-clock:hover { color: var(--text-color); }
+        body.overtime .history-item:hover, body.overtime #current-clock:hover { color: #fff; }
+
+        .selected { color: var(--accent-color) !important; font-weight: bold; }
+        body.overtime .selected { color: #fff !important; text-decoration: underline; }
+
+        @keyframes flash-bg {
+            0% { background-color: rgba(128,128,128,0.3); }
+            100% { background-color: transparent; }
+        }
+        .flash { animation: flash-bg 0.8s ease-out; }
+
+        #delta-info {
+            height: 40px;
+            line-height: 40px;
+            color: var(--accent-color);
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin: 5px 0;
+        }
+        body.overtime #delta-info { color: #fff; }
+
+        #current-clock {
+            font-weight: bold;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: var(--history-text);
+            padding: 5px 0;
+        }
+
+        /* Controls */
+        #controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.1;
+            transition: opacity 0.3s;
+            display: flex;
+            gap: 15px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 25px;
+            border-radius: 50px;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        #controls:hover { opacity: 1; }
+
+        button {
+            background: #f4f4f4; border: 1px solid #ccc; padding: 10px 18px; 
+            cursor: pointer; border-radius: 20px; font-weight: bold;
+        }
+        button:hover { background: #eee; border-color: #aaa; }
+    </style>
+</head>
+<body>
+
+    <div id="main-container">
+        <div id="message-container">
+            <div id="message-display" onclick="startEditing()">Meeting Timer</div>
+            <input type="text" id="message-input">
+        </div>
+
+        <div id="timer-container">
+            <div id="timer-digits">
+                <span id="d-min">03</span><span id="d-colon">:</span><span id="d-sec">00</span>
+                <div id="running-indicator"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sidebar">
+        <ul id="history-list"></ul>
+        <div id="delta-info"></div>
+        <div id="current-clock">00:00:00</div>
+    </div>
+
+    <div id="controls">
+        <button id="btn-start">Start/Pause</button>
+        <button id="btn-reset">Reset</button>
+        <button id="btn-up">+10s</button>
+        <button id="btn-down">-10s</button>
+        <button id="btn-full">Full Screen</button>
+    </div>
+
+<script>
+    const state = {
+        isRunning: false,
+        isOvertime: false,
+        duration: 180,
+        elapsed: 0,
+        sessionStart: null,
+        message: "Meeting Timer",
+        history: [],
+        inActiveRun: false // Track for bracket logic
+    };
+
+    let selectedTimeAnchor = null;
+    let isEditing = false;
+    let lastAddedId = null;
+
+    const dMin = document.getElementById('d-min');
+    const dSec = document.getElementById('d-sec');
+    const dColon = document.getElementById('d-colon');
+    const timerBox = document.getElementById('timer-digits');
+    const indicator = document.getElementById('running-indicator');
+    const msgDisplay = document.getElementById('message-display');
+    const msgInput = document.getElementById('message-input');
+    const historyList = document.getElementById('history-list');
+    const currentClock = document.getElementById('current-clock');
+    const deltaInfo = document.getElementById('delta-info');
+
+    const format24 = (date) => date.toLocaleTimeString('en-GB', { hour12: false });
+
+    function getSeconds() {
+        if (!state.isRunning) return state.elapsed;
+        return state.elapsed + (Date.now() - state.sessionStart) / 1000;
+    }
+
+    function updateUI() {
+        const totalSeconds = getSeconds();
+        let displaySeconds = state.duration - totalSeconds;
+
+        if (displaySeconds <= 0) {
+            state.isOvertime = true;
+            document.body.classList.add('overtime');
+            renderTimer(Math.abs(displaySeconds), true);
+        } else {
+            state.isOvertime = false;
+            document.body.classList.remove('overtime');
+            renderTimer(displaySeconds, false);
+        }
+
+        if (state.isRunning) {
+            dColon.classList.add('blink');
+            timerBox.classList.add('pulse');
+            indicator.style.display = 'block';
+        } else {
+            dColon.classList.remove('blink');
+            timerBox.classList.remove('pulse');
+            indicator.style.display = 'none';
+        }
+
+        currentClock.innerText = format24(new Date());
+
+        // Live update delta if "NOW" anchor is selected
+        if (selectedTimeAnchor === "NOW" && currentClock.getAttribute('data-hovering')) {
+            showDelta(new Date(parseInt(currentClock.getAttribute('data-hovering'))));
+        }
+
+        requestAnimationFrame(updateUI);
+    }
+
+    function renderTimer(seconds, isOvertime) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        if (!isOvertime) {
+            dMin.innerText = mins.toString().padStart(2, '0');
+            dSec.innerText = secs.toString().padStart(2, '0');
+            dColon.innerText = ":";
+        } else {
+            const tenths = Math.floor((seconds % 1) * 10);
+            if (mins > 0) {
+                dMin.innerText = mins;
+                dColon.innerText = ":";
+                dSec.innerText = secs.toString().padStart(2, '0') + "." + tenths;
+            } else {
+                dMin.innerText = "";
+                dColon.innerText = "";
+                dSec.innerText = secs + "." + tenths;
+            }
+        }
+    }
+
+    function toggleTimer() {
+        if (state.isRunning) {
+            state.elapsed += (Date.now() - state.sessionStart) / 1000;
+            state.isRunning = false;
+            addHistory("Pause");
+        } else {
+            state.sessionStart = Date.now();
+            state.isRunning = true;
+            addHistory(state.elapsed === 0 ? "Start" : "Resume");
+        }
+        save();
+    }
+
+    function resetTimer() {
+        if (!state.isRunning && state.elapsed === 0) return;
+        state.isRunning = false;
+        state.elapsed = 0;
+        state.isOvertime = false;
+        addHistory("Reset");
+        save();
+    }
+
+    function addHistory(type) {
+        if (type === "Reset" && state.history.length > 0 && state.history[state.history.length-1].type === "Reset") return;
+        const now = new Date();
+        const id = Math.random().toString(36).substr(2, 9);
+
+        let bracketPos = null;
+        if (type === "Start") { state.inActiveRun = true; bracketPos = 'top'; }
+        else if (type === "Reset") { bracketPos = 'bot'; state.inActiveRun = false; }
+        else if (state.inActiveRun) { bracketPos = 'mid'; }
+
+        state.history.push({ type, time: now, label: format24(now), id, bracket: bracketPos });
+        if (state.history.length > 26) state.history.shift();
+        
+        lastAddedId = id;
+        renderHistory();
+        setTimeout(() => { if(lastAddedId === id) { lastAddedId = null; renderHistory(); } }, 850);
+    }
+
+    function renderHistory() {
+        historyList.innerHTML = '';
+        state.history.forEach((item) => {
+            const li = document.createElement('li');
+            const isSelected = selectedTimeAnchor instanceof Date && selectedTimeAnchor.getTime() === item.time.getTime();
+
+            li.className = 'history-item' + (isSelected ? ' selected' : '');
+            if (item.id === lastAddedId) li.classList.add('flash');
+
+            // Bracket Classes
+            if (item.bracket) {
+                li.classList.add('bracket');
+                li.classList.add('bracket-' + item.bracket);
+            }
+
+            li.innerText = `${item.type} @ ${item.label}`;
+
+            li.onmouseenter = () => {
+                showDelta(item.time);
+                if (selectedTimeAnchor === "NOW") currentClock.setAttribute('data-hovering', item.time.getTime());
+            };
+            li.onmouseleave = () => {
+                deltaInfo.innerText = '';
+                currentClock.removeAttribute('data-hovering');
+            };
+            li.onclick = () => {
+                if (selectedTimeAnchor instanceof Date && selectedTimeAnchor.getTime() === item.time.getTime()) {
+                    selectedTimeAnchor = null;
+                } else {
+                    selectedTimeAnchor = item.time;
+                }
+                currentClock.classList.remove('selected');
+                renderHistory();
+            };
+            historyList.appendChild(li);
+        });
+    }
+
+    function showDelta(hoverTime) {
+        let anchor = selectedTimeAnchor === "NOW" ? new Date() : selectedTimeAnchor;
+        if (!anchor) return;
+        const diff = Math.abs(hoverTime - anchor) / 1000;
+        const m = Math.floor(diff / 60);
+        const s = Math.floor(diff % 60);
+        deltaInfo.innerText = `Diff: ${m > 0 ? m + 'm ' : ''}${s}s`;
+    }
+
+    currentClock.onclick = () => {
+        if (selectedTimeAnchor === "NOW") {
+            selectedTimeAnchor = null;
+            currentClock.classList.remove('selected');
+        } else {
+            selectedTimeAnchor = "NOW";
+            currentClock.classList.add('selected');
+        }
+        renderHistory();
+    };
+
+    currentClock.onmouseenter = () => showDelta(new Date());
+    currentClock.onmouseleave = () => deltaInfo.innerText = '';
+
+    function save() {
+        localStorage.setItem('timer_config_vfinal', JSON.stringify({ duration: state.duration, message: state.message }));
+    }
+
+    function load() {
+        try {
+            const data = JSON.parse(localStorage.getItem('timer_config_vfinal'));
+            if (data) {
+                state.duration = data.duration || 180;
+                state.message = data.message || "Meeting Timer";
+                msgDisplay.innerText = state.message;
+            }
+        } catch (e) {}
+    }
+
+    function startEditing() {
+        isEditing = true;
+        msgDisplay.style.display = 'none';
+        msgInput.style.display = 'inline-block';
+        msgInput.value = state.message;
+        msgInput.focus();
+        setTimeout(() => msgInput.select(), 10);
+    }
+
+    function stopEditing(saveChanges) {
+        isEditing = false;
+        if (saveChanges) {
+            state.message = msgInput.value;
+            msgDisplay.innerText = state.message;
+            save();
+        }
+        msgDisplay.style.display = 'block';
+        msgInput.style.display = 'none';
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (isEditing) {
+            if (e.key === 'Enter') stopEditing(true);
+            if (e.key === 'Escape') stopEditing(false);
+            return;
+        }
+        const key = e.key.toLowerCase();
+        if (key === ' ') { e.preventDefault(); toggleTimer(); }
+        else if (key === 'r' || key === 'к') resetTimer();
+        else if (key === 'f' || key === 'а') {
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+            else document.exitFullscreen();
+        }
+        else if (key === 'arrowup') { state.duration += 10; save(); }
+        else if (key === 'arrowdown') { state.duration = Math.max(0, state.duration - 10); save(); }
+        else if (key === 'e' || key === 'у') { e.preventDefault(); startEditing(); }
+    });
+
+    document.getElementById('btn-start').onclick = toggleTimer;
+    document.getElementById('btn-reset').onclick = resetTimer;
+    document.getElementById('btn-up').onclick = () => { state.duration += 10; save(); };
+    document.getElementById('btn-down').onclick = () => { state.duration = Math.max(0, state.duration - 10); save(); };
+    document.getElementById('btn-full').onclick = () => {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
+    };
+
+    load();
+    updateUI();
+</script>
+</body>
+</html>
