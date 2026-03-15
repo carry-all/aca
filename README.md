@@ -9,3 +9,4 @@ Timer for meetings
 * `Space` - Start/pause
 * `↑` / `↓` - Adjust by 10 secs
 * `F` - Fullscreen
+* `E` - Edit message
